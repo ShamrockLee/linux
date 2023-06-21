@@ -3,6 +3,7 @@
 #define __LINUX_COMPILER_H
 
 #include <linux/compiler_types.h>
+#include <linux/stringify.h>
 
 #ifndef __ASSEMBLY__
 
@@ -242,6 +243,63 @@ static inline void *offset_to_ptr(const int *off)
  * arch/x86/kernel/smpboot.c::start_secondary() for an example.
  */
 #define prevent_tail_call_optimization()	mb()
+
+
+/* pragma_unroll(N) specifies the unrolling count of the following loop.
+ *
+ * N should be a positive integer constant.
+ * The unrolling will not proceeded when N == 1 according to the current
+ * GCC manual and LLVM implementation, but the exact behavior is up to the
+ * compiler.
+ *
+ * Apply before the loop without semicolon.
+ *
+ * See also:
+ * Clang documentation
+ * https://clang.llvm.org/docs/AttributeReference.html#pragma-clang-loop
+ * https://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations
+ * GCC documentation
+ * https://gcc.gnu.org/onlinedocs/gcc/Loop-Specific-Pragmas.html
+ */
+
+/* checkpatch.pl will complain about the prefix/suffix definition */
+#ifdef __clang__
+/* _Pragma("clang loop unroll_count(N)") */
+#define __pragma_unroll_prefix clang loop unroll_count(
+#define __pragma_unroll_suffix )
+#elif __GNUC__ >= 8
+/* _Pragma("GCC unroll 0N") */
+#define __pragma_unroll_prefix GCC unroll 0 /* add 0 to keep the whitespace */
+#define __pragma_unroll_suffix /* empty suffix */
+#endif
+
+#ifdef __pragma_unroll_prefix
+#define __pragma_unroll_string(N)                   \
+	__stringify(__PASTE(__pragma_unroll_prefix, \
+			    __PASTE(N, __pragma_unroll_suffix)))
+#define pragma_unroll(N) _Pragma(__pragma_unroll_string(N))
+#else
+/* Fallback to empty macros */
+#define pragma_unroll(N)
+#endif
+
+/* pragma_unroll_disable prevents the following loop from being unrolled
+ *
+ * Example:
+ * ```
+ * pragma_unroll_disable for (int i = 0; i < 6; ++i)  {
+ *         // loop body
+ * }
+ *
+ */
+#ifdef __clang__
+#define pragma_unroll_disable _Pragma("clang loop unroll(disable)")
+#elif __GNUC__ >= 8
+#define pragma_unroll_disable pragma_unroll(1)
+#else
+#define pragma_unroll_disable
+#endif
+
 
 #include <asm/rwonce.h>
 
