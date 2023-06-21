@@ -916,7 +916,8 @@ static void ice_xmit_pkt_batch(struct ice_tx_ring *xdp_ring, struct xdp_desc *de
 	struct ice_tx_desc *tx_desc;
 	u32 i;
 
-	loop_unrolled_for(i = 0; i < PKTS_PER_BATCH; i++) {
+	pragma_unroll(PKTS_PER_BATCH)
+	for (i = 0; i < PKTS_PER_BATCH; i++) {
 		dma_addr_t dma;
 
 		dma = xsk_buff_raw_get_dma(xdp_ring->xsk_pool, descs[i].addr);
