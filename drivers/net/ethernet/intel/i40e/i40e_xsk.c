@@ -2,6 +2,7 @@
 /* Copyright(c) 2018 Intel Corporation. */
 
 #include <linux/bpf_trace.h>
+#include <linux/compiler.h>
 #include <linux/stringify.h>
 #include <net/xdp_sock_drv.h>
 #include <net/xdp.h>
@@ -488,7 +489,8 @@ static void i40e_xmit_pkt_batch(struct i40e_ring *xdp_ring, struct xdp_desc *des
 	dma_addr_t dma;
 	u32 i;
 
-	loop_unrolled_for(i = 0; i < PKTS_PER_BATCH; i++) {
+	pragma_unroll(PKTS_PER_BATCH)
+	for (i = 0; i < PKTS_PER_BATCH; i++) {
 		dma = xsk_buff_raw_get_dma(xdp_ring->xsk_pool, desc[i].addr);
 		xsk_buff_raw_dma_sync_for_device(xdp_ring->xsk_pool, dma, desc[i].len);
 
