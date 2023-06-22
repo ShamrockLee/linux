@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <linux/bpf.h>
+#include <linux/compiler.h>
 #include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/types.h>
@@ -12,6 +13,12 @@
 
 typedef uint32_t pid_t;
 struct task_struct {};
+
+#ifdef NO_UNROLL
+#define bpf_strobemeta_unroll(N) pragma_unroll_disable
+#else
+#define bpf_strobemeta_unroll(N) pragma_unroll(N)
+#endif
 
 #define TASK_COMM_LEN 16
 #define PERF_MAX_STACK_DEPTH 127
@@ -416,11 +423,7 @@ static __always_inline void *read_map_var(struct strobemeta_cfg *cfg,
 		payload += len;
 	}
 
-#ifdef NO_UNROLL
-#pragma clang loop unroll(disable)
-#else
-#pragma unroll
-#endif
+	bpf_strobemeta_unroll(STROBE_MAX_MAP_ENTRIES)
 	for (int i = 0; i < STROBE_MAX_MAP_ENTRIES; ++i) {
 		if (i >= map.cnt)
 			break;
@@ -541,27 +544,15 @@ static void *read_strobe_meta(struct task_struct *task,
 	if (err != STROBE_MAX_MAPS)
 		return NULL;
 #else
-#ifdef NO_UNROLL
-#pragma clang loop unroll(disable)
-#else
-#pragma unroll
-#endif /* NO_UNROLL */
+	bpf_strobemeta_unroll(STROBE_MAX_INTS)
 	for (int i = 0; i < STROBE_MAX_INTS; ++i) {
 		read_int_var(cfg, i, tls_base, &value, data);
 	}
-#ifdef NO_UNROLL
-#pragma clang loop unroll(disable)
-#else
-#pragma unroll
-#endif /* NO_UNROLL */
+	bpf_strobemeta_unroll(STROBE_MAX_STRS)
 	for (int i = 0; i < STROBE_MAX_STRS; ++i) {
 		payload += read_str_var(cfg, i, tls_base, &value, data, payload);
 	}
-#ifdef NO_UNROLL
-#pragma clang loop unroll(disable)
-#else
-#pragma unroll
-#endif /* NO_UNROLL */
+	bpf_strobemeta_unroll(STROBE_MAX_MAPS)
 	for (int i = 0; i < STROBE_MAX_MAPS; ++i) {
 		payload = read_map_var(cfg, i, tls_base, &value, data, payload);
 	}

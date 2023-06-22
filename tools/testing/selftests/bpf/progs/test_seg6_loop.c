@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <linux/seg6_local.h>
 #include <linux/bpf.h>
+#include <linux/compiler.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
 
@@ -134,7 +135,7 @@ static __always_inline int is_valid_tlv_boundary(struct __sk_buff *skb,
 	// we can only go as far as ~10 TLVs due to the BPF max stack size
 	// workaround: define induction variable "i" as "long" instead
 	// of "int" to prevent alu32 sub-register spilling.
-	#pragma clang loop unroll(disable)
+	pragma_unroll_disable
 	for (long i = 0; i < 100; i++) {
 		struct sr6_tlv_t tlv;
 

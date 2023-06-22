@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <linux/compiler.h>
 #include <linux/stddef.h>
 #include <linux/bpf.h>
 
@@ -30,7 +31,7 @@ static __always_inline int is_tcp_mem(struct bpf_sysctl *ctx)
 	if (ret < 0 || ret != sizeof(tcp_mem_name) - 1)
 		return 0;
 
-#pragma clang loop unroll(disable)
+	pragma_unroll_disable
 	for (i = 0; i < sizeof(tcp_mem_name); ++i)
 		if (name[i] != tcp_mem_name[i])
 			return 0;
@@ -59,7 +60,7 @@ int sysctl_tcp_mem(struct bpf_sysctl *ctx)
 	if (ret < 0 || ret >= MAX_VALUE_STR_LEN)
 		return 0;
 
-#pragma clang loop unroll(disable)
+	pragma_unroll_disable
 	for (i = 0; i < ARRAY_SIZE(tcp_mem); ++i) {
 		ret = bpf_strtoul(value + off, MAX_ULONG_STR_LEN, 0,
 				  tcp_mem + i);

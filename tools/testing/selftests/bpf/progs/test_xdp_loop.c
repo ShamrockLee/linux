@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <linux/bpf.h>
+#include <linux/compiler.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <linux/ip.h>
@@ -133,7 +134,7 @@ static __always_inline int handle_ipv4(struct xdp_md *xdp)
 	iph->ttl = 8;
 
 	next_iph = (__u16 *)iph;
-#pragma clang loop unroll(disable)
+	pragma_unroll_disable
 	for (i = 0; i < sizeof(*iph) >> 1; i++)
 		csum += *next_iph++;
 

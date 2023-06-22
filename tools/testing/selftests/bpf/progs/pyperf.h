@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
+#include <linux/compiler.h>
 #include <linux/sched.h>
 #include <linux/ptrace.h>
 #include <stdint.h>
@@ -298,9 +299,9 @@ int __on_event(struct bpf_raw_tracepoint_args *ctx)
 #if defined(USE_ITER)
 /* no for loop, no unrolling */
 #elif defined(NO_UNROLL)
-#pragma clang loop unroll(disable)
+pragma_unroll_disable
 #elif defined(UNROLL_COUNT)
-#pragma clang loop unroll_count(UNROLL_COUNT)
+pragma_unroll(UNROLL_COUNT)
 #else
 #pragma clang loop unroll(full)
 #endif /* NO_UNROLL */

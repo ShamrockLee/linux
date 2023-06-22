@@ -4,12 +4,19 @@
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
+#include <linux/compiler.h>
 
 #include "profiler.h"
 #include "err.h"
 
 #ifndef NULL
 #define NULL 0
+#endif
+
+#ifdef UNROLL
+#define bpf_profiler_unroll(N) pragma_unroll(N)
+#else
+#define bpf_profiler_unroll(N)
 #endif
 
 #define O_WRONLY 00000001
@@ -167,9 +174,7 @@ probe_read_lim(void* dst, void* src, unsigned long len, unsigned long max)
 static INLINE int get_var_spid_index(struct var_kill_data_arr_t* arr_struct,
 				     int spid)
 {
-#ifdef UNROLL
-#pragma unroll
-#endif
+	bpf_profiler_unroll(ARRAY_SIZE(arr_struct->array))
 	for (int i = 0; i < ARRAY_SIZE(arr_struct->array); i++)
 		if (arr_struct->array[i].meta.pid == spid)
 			return i;
@@ -183,9 +188,8 @@ static INLINE void populate_ancestors(struct task_struct* task,
 	u32 num_ancestors, ppid;
 
 	ancestors_data->num_ancestors = 0;
-#ifdef UNROLL
-#pragma unroll
-#endif
+
+	bpf_profiler_unroll(MAX_ANCESTORS)
 	for (num_ancestors = 0; num_ancestors < MAX_ANCESTORS; num_ancestors++) {
 		parent = BPF_CORE_READ(parent, real_parent);
 		if (parent == NULL)
@@ -210,9 +214,7 @@ static INLINE void* read_full_cgroup_path(struct kernfs_node* cgroup_node,
 	void* payload_start = payload;
 	size_t filepart_length;
 
-#ifdef UNROLL
-#pragma unroll
-#endif
+	bpf_profiler_unroll(MAX_CGROUPS_PATH_DEPTH)
 	for (int i = 0; i < MAX_CGROUPS_PATH_DEPTH; i++) {
 		filepart_length =
 			bpf_probe_read_kernel_str(payload, MAX_PATH,
@@ -260,9 +262,7 @@ static INLINE void* populate_cgroup_info(struct cgroup_data_t* cgroup_data,
 	if (ENABLE_CGROUP_V1_RESOLVER && CONFIG_CGROUP_PIDS) {
 		int cgrp_id = bpf_core_enum_value(enum cgroup_subsys_id___local,
 						  pids_cgrp_id___local);
-#ifdef UNROLL
-#pragma unroll
-#endif
+		bpf_profiler_unroll(CGROUP_SUBSYS_COUNT)
 		for (int i = 0; i < CGROUP_SUBSYS_COUNT; i++) {
 			struct cgroup_subsys_state* subsys =
 				BPF_CORE_READ(task, cgroups, subsys[i]);
@@ -407,9 +407,7 @@ static INLINE int trace_var_sys_kill(void* ctx, int tpid, int sig)
 				get_var_kill_data(ctx, spid, tpid, sig);
 			if (kill_data == NULL)
 				return 0;
-#ifdef UNROLL
-#pragma unroll
-#endif
+			bpf_profiler_unroll(ARRAY_SIZE(arr_struct->array))
 			for (int i = 0; i < ARRAY_SIZE(arr_struct->array); i++)
 				if (arr_struct->array[i].meta.pid == 0) {
 					bpf_probe_read_kernel(&arr_struct->array[i],
@@ -487,9 +485,7 @@ read_absolute_file_path_from_dentry(struct dentry* filp_dentry, void* payload)
 	size_t filepart_length;
 	struct dentry* parent_dentry;
 
-#ifdef UNROLL
-#pragma unroll
-#endif
+	bpf_profiler_unroll(MAX_PATH_DEPTH)
 	for (int i = 0; i < MAX_PATH_DEPTH; i++) {
 		filepart_length =
 			bpf_probe_read_kernel_str(payload, MAX_PATH,
@@ -514,9 +510,7 @@ static INLINE bool
 is_ancestor_in_allowed_inodes(struct dentry* filp_dentry)
 {
 	struct dentry* parent_dentry;
-#ifdef UNROLL
-#pragma unroll
-#endif
+	bpf_profiler_unroll(MAX_PATH_DEPTH)
 	for (int i = 0; i < MAX_PATH_DEPTH; i++) {
 		u64 dir_ino = BPF_CORE_READ(filp_dentry, d_inode, i_ino);
 		bool* allowed_dir = bpf_map_lookup_elem(&allowed_directory_inodes, &dir_ino);
@@ -639,9 +633,7 @@ int raw_tracepoint__sched_process_exit(void* ctx)
 	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 	struct kernfs_node* proc_kernfs = BPF_CORE_READ(task, cgroups, dfl_cgrp, kn);
 
-#ifdef UNROLL
-#pragma unroll
-#endif
+	bpf_profiler_unroll(ARRAY_SIZE(arr_struct->array))
 	for (int i = 0; i < ARRAY_SIZE(arr_struct->array); i++) {
 		struct var_kill_data_t* past_kill_data = &arr_struct->array[i];
 
