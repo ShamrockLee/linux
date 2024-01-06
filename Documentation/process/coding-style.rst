@@ -874,6 +874,20 @@ functions:
 ret is a common name for a local variable - __foo_ret is less likely
 to collide with an existing variable.
 
+To eliminate namespace collisions for local variables in macros as much as
+possible, substitute them with `__UNIQUE_ID(prefix)`.
+
+.. code-block:: c
+
+	#include <linux/compiler.h>
+	#define FOO(x) __FOO(x, __UNIQUE_ID(ret))
+	#define __FOO(x, ret)			\
+	({					\
+		typeof(x) ret;			\
+		ret = calc_ret(x);		\
+		(ret);				\
+	})
+
 The cpp manual deals with macros exhaustively. The gcc internals manual also
 covers RTL which is used frequently with assembly language in the kernel.
 
