@@ -922,25 +922,25 @@ Linux內核布爾（bool）類型是C99 _Bool類型的別名。布爾值只能�
 
 總之，在結構體和參數中有限地使用布爾可以提高可讀性。
 
+
 18) 不要重新發明內核宏
 ----------------------
 
-頭文件 include/linux/kernel.h 包含了一些宏，你應該使用它們，而不要自己寫一些
-它們的變種。比如，如果你需要計算一個數組的長度，使用這個宏
+``include/linux`` 目錄下的頭文件提供了一些宏，你應該使用它們，而不要自己寫
+一些它們的變種。比如，如果你需要計算一個數組的長度，使用
+``include/linux/array_size.h`` 提供的 ``ARRAY_SIZE()`` 宏
 
 .. code-block:: c
 
-	#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+	#include <linux/array_size.h>
+	ARRAY_SIZE(x) // The size of array x
 
-類似的，如果你要計算某結構體成員的大小，使用
+類似的，如果你要計算某結構體成員的大小，使用 ``include/linux/stddef.h`` 當中
+的 ``sizeof_field()`` 宏。
 
-.. code-block:: c
-
-	#define sizeof_field(t, f) (sizeof(((t*)0)->f))
-
-還有可以做嚴格的類型檢查的 min() 和 max() 宏，如果你需要可以使用它們。你可以
-自己看看那個頭文件裏還定義了什麼你可以拿來用的東西，如果有定義的話，你就不應
-在你的代碼裏自己重新定義。
+還有 ``include/linux/minmax.h`` 提供能做嚴格的類型檢查的 ``min()`` 和
+``max()`` 宏，如果你需要可以使用它們。你可以自己搜尋、看看那些頭文件裏還定義
+了什麼你可以拿來用的東西，如果有定義的話，你就不應在你的代碼裏自己重新定義。
 
 
 19) 編輯器模式行和其他需要羅嗦的事情
