@@ -7,6 +7,18 @@
 /* Indirect macros required for expanded argument pasting, eg. __LINE__. */
 #include <linux/macro_paste.h>
 
+/**
+ * __UNIQUE_ID() - Expand to a unique identifier name.
+ * @prefix:
+ *      Custom identifier prefix following "__UNIQUE_ID_".
+ *      It must expands to a valid C identifier name.
+ *
+ * This helps prevent namespace collision in situations like macro definitions.
+ *
+ * Return: A valid and unique C identifier name.
+ */
+#define __UNIQUE_ID(prefix) __PASTE(__PASTE(__UNIQUE_ID_, prefix), __COUNTER__)
+
 #ifndef __ASSEMBLY__
 
 #ifdef __KERNEL__
@@ -179,8 +191,6 @@ void ftrace_likely_update(struct ftrace_likely_data *f, int val,
 #define OPTIMIZER_HIDE_VAR(var)						\
 	__asm__ ("" : "=r" (var) : "0" (var))
 #endif
-
-#define __UNIQUE_ID(prefix) __PASTE(__PASTE(__UNIQUE_ID_, prefix), __COUNTER__)
 
 /**
  * data_race - mark an expression as containing intentional data races
