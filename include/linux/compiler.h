@@ -4,6 +4,9 @@
 
 #include <linux/compiler_types.h>
 
+/* Indirect macros required for expanded argument pasting, eg. __LINE__. */
+#include <linux/macro_paste.h>
+
 #ifndef __ASSEMBLY__
 
 #ifdef __KERNEL__

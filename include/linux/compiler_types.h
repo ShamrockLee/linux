@@ -2,6 +2,9 @@
 #ifndef __LINUX_COMPILER_TYPES_H
 #define __LINUX_COMPILER_TYPES_H
 
+/* Indirect macros required for expanded argument pasting, eg. __LINE__. */
+#include <linux/macro_paste.h>
+
 /*
  * __has_builtin is supported on gcc >= 10, clang >= 3 and icc >= 21.
  * In the meantime, to support gcc < 10, we implement __has_builtin
@@ -78,10 +81,6 @@ static inline void __chk_io_ptr(const volatile void __iomem *ptr) { }
 # define ACCESS_PRIVATE(p, member) ((p)->member)
 # define __builtin_warning(x, y...) (1)
 #endif /* __CHECKER__ */
-
-/* Indirect macros required for expanded argument pasting, eg. __LINE__. */
-#define ___PASTE(a,b) a##b
-#define __PASTE(a,b) ___PASTE(a,b)
 
 #ifdef __KERNEL__
 
