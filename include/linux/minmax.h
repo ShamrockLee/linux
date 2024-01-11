@@ -267,7 +267,8 @@ static inline bool in_range32(u32 val, u32 start, u32 len)
  * @a: first value
  * @b: second value
  */
-#define swap(a, b) \
+#define swap(a, b) __swap_implementation(a, b, __UNIQUE_ID(__tmp))
+#define __swap_implementation(a, b, __tmp) \
 	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
 
 #endif	/* _LINUX_MINMAX_H */
