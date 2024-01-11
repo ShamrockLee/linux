@@ -129,10 +129,14 @@
  * @x: value1
  * @y: value2
  */
-#define min_not_zero(x, y) ({			\
-	typeof(x) __x = (x);			\
-	typeof(y) __y = (y);			\
-	__x == 0 ? __y : ((__y == 0) ? __x : min(__x, __y)); })
+#define min_not_zero(x, y) \
+	__min_not_zero_impl(x, y, __UNIQUE_ID(__x), __UNIQUE_ID(__y))
+#define __min_not_zero_impl(x, y, __x, __y)                          \
+	({                                                           \
+		typeof(x) __x = (x);                                 \
+		typeof(y) __y = (y);                                 \
+		__x == 0 ? __y : ((__y == 0) ? __x : min(__x, __y)); \
+	})
 
 /**
  * clamp - return a value clamped to a given range with strict typechecking
@@ -185,13 +189,19 @@
  * typeof() keeps the const qualifier. Use __unqual_scalar_typeof() in order
  * to discard the const qualifier for the __element variable.
  */
-#define __minmax_array(op, array, len) ({				\
-	typeof(&(array)[0]) __array = (array);				\
-	typeof(len) __len = (len);					\
-	__unqual_scalar_typeof(__array[0]) __element = __array[--__len];\
-	while (__len--)							\
-		__element = op(__element, __array[__len]);		\
-	__element; })
+#define __minmax_array(op, array, len)                          \
+	__minmax_array_impl(op, array, len, __UNIQUE_ID(__array), \
+			    __UNIQUE_ID(__len), __UNIQUE_ID(__element))
+#define __minmax_array_impl(op, array, len, __array, __len, __element) \
+	({                                                             \
+		typeof(&(array)[0]) __array = (array);                 \
+		typeof(len) __len = (len);                             \
+		__unqual_scalar_typeof(__array[0])                     \
+			__element = __array[--__len];                  \
+		while (__len--)                                        \
+			__element = op(__element, __array[__len]);     \
+		__element;                                             \
+	})
 
 /**
  * min_array - return minimum of values present in an array
@@ -267,7 +277,12 @@ static inline bool in_range32(u32 val, u32 start, u32 len)
  * @a: first value
  * @b: second value
  */
-#define swap(a, b) \
-	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+#define swap(a, b) __swap_impl(a, b, __UNIQUE_ID(__tmp))
+#define __swap_impl(a, b, __tmp)       \
+	do {                           \
+		typeof(a) __tmp = (a); \
+		(a) = (b);             \
+		(b) = __tmp;           \
+	} while (0)
 
 #endif	/* _LINUX_MINMAX_H */
